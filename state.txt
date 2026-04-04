@@ -1,0 +1,4 @@
+ticks=10
+confidence=0.50
+state=Pensando
+last_thought=thought
