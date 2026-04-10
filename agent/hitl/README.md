@@ -28,6 +28,18 @@ Depois, abra no navegador:
 
 - http://localhost:8080
 
+API disponível:
+
+- `GET /api/status`
+- `POST /api/run`
+
+Exemplo de execução via API:
+
+```bash
+curl -X POST http://localhost:8080/api/run \
+  -H 'Content-Type: application/json' \
+  -d '{"goal":"Documentar API","approved":true}'
+```
 
 ## Acesso rápido (1 comando)
 
@@ -49,3 +61,7 @@ export OPENAI_COMPAT_API_KEY=""
 ```
 
 Sem essas variáveis, o sistema usa plano de fallback local.
+
+## Escopo atual
+
+Este MVP **não** implementa WebSocket, LangGraph completo, ChromaDB, ou dashboard cyberpunk. O foco aqui é HITL mínimo funcional com CLI + HTML + API REST.

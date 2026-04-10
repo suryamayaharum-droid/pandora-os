@@ -33,6 +33,18 @@ type RunState struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
+type apiStatus struct {
+	Service         string    `json:"service"`
+	Version         string    `json:"version"`
+	Time            time.Time `json:"time"`
+	ModelConfigured bool      `json:"model_configured"`
+}
+
+type apiRunRequest struct {
+	Goal     string `json:"goal"`
+	Approved bool   `json:"approved"`
+}
+
 type chatRequest struct {
 	Model    string        `json:"model"`
 	Messages []chatMessage `json:"messages"`
@@ -140,26 +152,65 @@ func startWebServer(addr string) {
 				return
 			}
 
-			state := RunState{
-				Goal:            goal,
-				CurrentStage:    StagePlan,
-				UpdatedAt:       time.Now(),
-				Plan:            buildPlan(goal),
-				ApprovedByHuman: approved,
-			}
-			state.CurrentStage = StageReview
-			state = processExecution(state)
-
+			state := runGoal(goal, approved)
 			tmpl.Execute(w, pageData{Result: &state})
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
 
+	http.HandleFunc("/api/status", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, apiStatus{
+			Service:         "pandora-hitl-agent",
+			Version:         "v0.2.0",
+			Time:            time.Now(),
+			ModelConfigured: os.Getenv("OPENAI_COMPAT_BASE_URL") != "" && os.Getenv("OPENAI_COMPAT_MODEL") != "",
+		})
+	})
+
+	http.HandleFunc("/api/run", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "use POST"})
+			return
+		}
+		var req apiRunRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
+			return
+		}
+		goal := strings.TrimSpace(req.Goal)
+		if goal == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "goal é obrigatório"})
+			return
+		}
+		state := runGoal(goal, req.Approved)
+		writeJSON(w, http.StatusOK, state)
+	})
+
 	fmt.Printf("🌐 Interface HTML disponível em http://localhost%s\n", addr)
+	fmt.Printf("📡 API status: http://localhost%s/api/status\n", addr)
+	fmt.Printf("▶️  API run: POST http://localhost%s/api/run\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		fmt.Printf("falha ao iniciar servidor: %v\n", err)
 	}
+}
+
+func runGoal(goal string, approved bool) RunState {
+	state := RunState{
+		Goal:            goal,
+		CurrentStage:    StagePlan,
+		UpdatedAt:       time.Now(),
+		Plan:            buildPlan(goal),
+		ApprovedByHuman: approved,
+	}
+	state.CurrentStage = StageReview
+	return processExecution(state)
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(payload)
 }
 
 func buildPlan(goal string) string {
@@ -259,6 +310,7 @@ const webPage = `<!doctype html>
 <body>
   <h1>Agent MVP com HITL</h1>
   <p>Preencha o objetivo e aprove para permitir execução externa.</p>
+  <p><small>Endpoints: <code>/api/status</code> e <code>/api/run</code>.</small></p>
 
   {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
 
