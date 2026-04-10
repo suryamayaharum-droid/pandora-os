@@ -10,12 +10,23 @@ Implementação mínima de um agente funcional com aprovação humana antes de e
 4. Executa em modo seguro.
 5. Salva relatório em `hitl_run_state.json`.
 
-## Execução
+## Execução CLI
 
 ```bash
 cd agent
 go run ./hitl
 ```
+
+## Acesso por HTML
+
+```bash
+cd agent
+go run ./hitl -web -addr :8080
+```
+
+Depois, abra no navegador:
+
+- http://localhost:8080
 
 ## Integração com modelos open-source (opcional)
 
