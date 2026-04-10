@@ -1,0 +1,30 @@
+# Agent MVP com Human-in-the-Loop (HITL)
+
+Implementação mínima de um agente funcional com aprovação humana antes de execução externa.
+
+## Fluxo
+
+1. Recebe objetivo.
+2. Gera plano (via endpoint OpenAI-compatible opcional).
+3. Solicita aprovação humana.
+4. Executa em modo seguro.
+5. Salva relatório em `hitl_run_state.json`.
+
+## Execução
+
+```bash
+cd agent
+go run ./hitl
+```
+
+## Integração com modelos open-source (opcional)
+
+Defina variáveis para usar servidor compatível com OpenAI (ex.: vLLM, Ollama compat layer):
+
+```bash
+export OPENAI_COMPAT_BASE_URL="http://localhost:8000/v1"
+export OPENAI_COMPAT_MODEL="Qwen/Qwen2.5-7B-Instruct"
+export OPENAI_COMPAT_API_KEY=""
+```
+
+Sem essas variáveis, o sistema usa plano de fallback local.
