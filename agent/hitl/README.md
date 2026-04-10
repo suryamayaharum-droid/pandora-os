@@ -28,6 +28,16 @@ Depois, abra no navegador:
 
 - http://localhost:8080
 
+
+## Acesso rápido (1 comando)
+
+```bash
+cd agent/hitl
+./start_web.sh 8080
+```
+
+Esse script já mostra os links para acesso local e pela rede.
+
 ## Integração com modelos open-source (opcional)
 
 Defina variáveis para usar servidor compatível com OpenAI (ex.: vLLM, Ollama compat layer):
